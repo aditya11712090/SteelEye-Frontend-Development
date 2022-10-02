@@ -1,0 +1,134 @@
+Question 1. Explain what the simple List component does.
+Answer:
+List is used to store multiple items of the same and different datatype under a variable. It is basically an array. We can perform various operations on it such as .map() to loop over the list/array to list down all the elements.
+The wrappedListComponent returns a memoized components list. By memoized it states that it doesn't re-render unnecessarily
+that is if the component's props don't change it doesn't re-render. The memo is used to make website speed more efficient and perform better. As long as the title and release date properties are the same between renderings, React reuses the memoized content.
+
+Question 2. What problems/warnings are there with code?
+Error 1:
+Wrong property passed with PropType and use of arrayof. Shape is a property of Proptype which is used incorrectly instead it should be shape and arrayOf
+
+    Error:
+        WrappedListComponent.propTypes = {
+        items: PropTypes.array(PropTypes.shapeOf({
+        text: PropTypes.string.isRequired,
+        })),
+        };     
+
+    Correction:
+        WrappedListComponent.propTypes = {
+        items: PropTypes.arrayOf(PropTypes.shape({
+        text: PropTypes.string.isRequired,
+        })),             
+Error 2:
+Error in declaring selectedIndex, it was throwing an error of React Hook useEffect has a missing dependency: 'setSelectedIndex'
+
+            Error:
+            const [setSelectedIndex, selectedIndex] = useState();
+
+            Correction:
+            const [selectedIndex, setSelectedIndex] = useState(false);
+Error 3:
+As map() method was called and by default it was declared it as null due to which it is throwing an error. Ideally data should be passed from App component but in this case as data is not passed from App component so we can pass data as default prop
+
+          Error:
+          WrappedListComponent.defaultProps = {
+                 items: null,
+             };
+
+          Correction:
+          WrappedListComponent.defaultProps = {                   
+            items: [
+            { text: "Ayush Ranjan", index: 1 },
+            { text: "11912170", index: 1 },
+            { text: "BTech CSE (2023)", index: 1 },
+            { text: "Lovely Professional University", index: 1 }
+            ]
+            };
+Error 4:
+Invalid prop isSelected of type string supplied to WrappedSingleListItem, expected boolean. We have initialised propType of isSelected as bool but we are declaring it with a string value due to which it is throwing an error.
+
+            Error:    
+            const handleClick = index => { setSelectedIndex(index); };
+
+            Correction:
+            const handleClick = index => { setSelectedIndex(true); };
+Error 5:
+onClickHandler is basically being called as a function here which is why rendered color is always green as it takes value of index initially passed always, instead it should be called as a arrow function.
+
+            Error:
+            onClick={onClickHandler(index)}
+
+            Correction
+            onClick={()=>onClickHandler(index)}
+Question 3 . Please fix, optimize, and/or modify the component as much as you think is necessary.
+My Soluition -
+    import React, { useState, useEffect, memo } from "react";
+    import PropTypes from "prop-types";
+
+    // Single List Item
+    const WrappedSingleListItem = ({ index, isSelected, onClickHandler, text }) => {
+    return (
+    <li
+    style={{ backgroundColor: isSelected ? "green" : "red" }}
+    onClick={()=>onClickHandler(index)}                         //Error 5 (Which is resolved)
+    >
+    {text}
+    </li>
+    );
+    };
+
+    WrappedSingleListItem.propTypes = {           
+    index: PropTypes.number,
+    isSelected: PropTypes.bool,
+    onClickHandler: PropTypes.func.isRequired,
+    text: PropTypes.string.isRequired
+    };
+
+    const SingleListItem = memo(WrappedSingleListItem);
+
+    // List Component
+    const WrappedListComponent = ({ items }) => {                  
+    const [selectedIndex, setSelectedIndex] = useState(false);     //Error 2 (Which is resolved)
+
+    useEffect(() => {
+    setSelectedIndex();
+    }, [items]);
+
+    const handleClick = index => {
+        setSelectedIndex(true);                                 //Error 4 (Which is resolved)
+      };
+
+    return (
+    <ul style={{ textAlign: "left" }}>
+    {items.map((item, index) => (
+        <SingleListItem
+        onClickHandler={() => handleClick(index)}
+        text={item.text}
+        index={index}
+        key={index}
+        isSelected={selectedIndex}
+        />
+    ))}
+    </ul>
+    );
+    };
+
+    WrappedListComponent.propTypes = {
+        items: PropTypes.arrayOf(PropTypes.shape({         //Error 1 (Which is resolved)
+          text: PropTypes.string.isRequired,
+        })),
+      };
+
+    WrappedListComponent.defaultProps = {                   //Error 3 (Which is resolved)
+    items: [
+    { text: "Ayush Ranjan", index: 1 },
+    { text: "11912170", index: 1 },
+    { text: "BTech CSE (2023)", index: 1 },
+    { text: "Lovely Professional University", index: 1 }
+    ]
+    };
+
+    const List = memo(WrappedListComponent);
+
+    export default List;
